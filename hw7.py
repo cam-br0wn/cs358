@@ -1,8 +1,5 @@
 # Cam Brown
 
-
-
-
 # This module provides classical simulations of basic quantum algorithms (once you write them).
 
 # In numpy, I think that the default complex dtype varies from platform to platform. If you want to explicitly use the default type in your code, use one.dtype (where one is defined just below).
