@@ -39,30 +39,11 @@ def check_error():
     plt.show()
 
 def main():
+    # this code displays a histogram of 1 million normed errors, plotted from 0 to .5
+    # if you want to run, you might consider lowering the number of iterations
+    # The curve looks cool, see attached to hw6.pdf
     check_error()
 
 if __name__ == '__main__':
     main()
 
-
-## Phil Code
-
-# import math
-# import cmath
-# import random
-# import numpy
-# import qc
-
-# decileSum = 0
-# deciles = []
-
-
-# for x in range(1,1001):
-# 	state = qc.uniform(2)
-# 	value = (state[0]*state[3])-(state[1]*state[2])
-# 	decileSum += value
-# 	if(x%100 == 0):
-# 		deciles.append(decileSum/100) 
-
-# for x in range(0,9):
-# 	print(deciles[x])
