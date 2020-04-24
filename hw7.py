@@ -2,7 +2,8 @@
 
 # This module provides classical simulations of basic quantum algorithms (once you write them).
 
-# In numpy, I think that the default complex dtype varies from platform to platform. If you want to explicitly use the default type in your code, use one.dtype (where one is defined just below).
+# In numpy, I think that the default complex dtype varies from platform to platform. If you want to explicitly use
+# the default type in your code, use one.dtype (where one is defined just below).
 
 import random
 import math
@@ -10,7 +11,9 @@ import numpy
 
 ### CONSTANTS ###
 
-# We haven't discussed this trivial case, but a 0-qbit state or gate is the complex scalar 1, represented as the following object. Notice that this object is neither the column vector numpy.array([1 + 0j]) nor the matrix numpy.array([[1 + 0j]]).
+# We haven't discussed this trivial case, but a 0-qbit state or gate is the complex scalar 1, represented as the
+# following object. Notice that this object is neither the column vector numpy.array([1 + 0j]) nor the matrix
+# numpy.array([[1 + 0j]]).
 one = numpy.array(1 + 0j)
 
 # Our favorite one-qbit states.
@@ -37,18 +40,20 @@ swap = numpy.array([[1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                     [0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j],
                     [0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j]])
 
+
 ### BIT STRINGS ###
 
 # We represent an n-bit string --- that is, an element of {0, 1}^n --- in Python as a tuple of 0s and 1s.
 
 
 def string(n, m):
-    '''Converts a non-negative Python integer m to its corresponding bit string. As necessary, pads with leading 0s to bring the number of bits up to n.'''
+    '''Converts a non-negative Python integer m to its corresponding bit string. As necessary, pads with leading 0s
+    to bring the number of bits up to n. '''
     s = ()
     while m >= 1:
-        s = (m % 2, ) + s
+        s = (m % 2,) + s
         m = m // 2
-    s = (n - len(s)) * (0, ) + s
+    s = (n - len(s)) * (0,) + s
     return s
 
 
@@ -65,26 +70,30 @@ def norm(c):
     return math.sqrt(math.pow(c.real, 2) + math.pow(c.imag, 2))
 
 
-def application(U, kPsi):
-  return kPsi.dot(U)
+def application(U, ket_psi):
+    return ket_psi.dot(U)
 
 
 # returns the tensor product of two one-qbit states
-def tensor(ketChi, ketPsi):
-    # print(ketPsi[0])
-    # print(ketPsi[-1])
-    if(numpy.shape(ketChi) == (2,2)):
-      tense = numpy.array([
-        [ketChi[0][0]*ketPsi[0][0],ketChi[0][0]*ketPsi[0][1],ketChi[0][1]*ketPsi[0][0],ketChi[0][1]*ketPsi[0][1]],
-        [ketChi[0][0]*ketPsi[1][0],ketChi[0][0]*ketPsi[1][1],ketChi[0][1]*ketPsi[1][0],ketChi[0][1]*ketPsi[1][1]],
-        [ketChi[1][0]*ketPsi[0][0],ketChi[1][0]*ketPsi[0][1],ketChi[1][1]*ketPsi[0][0],ketChi[1][1]*ketPsi[0][1]],
-        [ketChi[1][0]*ketPsi[1][0],ketChi[1][0]*ketPsi[1][1],ketChi[1][1]*ketPsi[1][0],ketChi[1][1]*ketPsi[1][1]]
-      ])
+def tensor(ket_chi, ket_psi):
+    # print(ket_psi[0])
+    # print(ket_psi[-1])
+    if numpy.shape(ket_chi) == (2, 2):
+        tense = numpy.array([
+            [ket_chi[0][0] * ket_psi[0][0], ket_chi[0][0] * ket_psi[0][-1], ket_chi[0][-1] * ket_psi[0][0],
+             ket_chi[0][-1] * ket_psi[0][-1]],
+            [ket_chi[0][0] * ket_psi[-1][0], ket_chi[0][0] * ket_psi[-1][-1], ket_chi[0][-1] * ket_psi[-1][0],
+             ket_chi[0][-1] * ket_psi[-1][-1]],
+            [ket_chi[-1][0] * ket_psi[0][0], ket_chi[-1][0] * ket_psi[0][-1], ket_chi[-1][-1] * ket_psi[0][0],
+             ket_chi[-1][-1] * ket_psi[0][-1]],
+            [ket_chi[-1][0] * ket_psi[-1][0], ket_chi[-1][0] * ket_psi[-1][-1], ket_chi[-1][-1] * ket_psi[-1][0],
+             ket_chi[-1][-1] * ket_psi[-1][-1]]
+        ])
     else:
-      tense = numpy.array([
-          ketChi[0] * ketPsi[0], ketChi[0] * ketPsi[-1], ketChi[-1] * ketPsi[0],
-          ketChi[-1] * ketPsi[-1]
-      ])
+        tense = numpy.array([
+            ket_chi[0] * ket_psi[0], ket_chi[0] * ket_psi[-1], ket_chi[-1] * ket_psi[0],
+            ket_chi[-1] * ket_psi[-1]
+        ])
     return tense
 
 
@@ -93,7 +102,7 @@ def first(s):
     x = math.sqrt(math.pow(norm(s[0]), 2) + math.pow(norm(s[1]), 2))
     y = math.sqrt(math.pow(norm(s[2]), 2) + math.pow(norm(s[3]), 2))
 
-    # ketPsi = tensor(x*ket0, ketChi) + tensor(y*ket1, ketPhi)
+    # ket_psi = tensor(x*ket0, ket_chi) + tensor(y*ket1, ketPhi)
 
     measurement = random.uniform(0, 1)
     if (measurement < math.pow(abs(x), 2)):
@@ -110,7 +119,7 @@ def last(s):
     x = math.sqrt(math.pow(norm(s[0]), 2) + math.pow(norm(s[1]), 2))
     y = math.sqrt(math.pow(norm(s[2]), 2) + math.pow(norm(s[3]), 2))
 
-    # ketPsi = tensor(x*ket0, ketChi) + tensor(y*ket1, ketPhi)
+    # ket_psi = tensor(x*ket0, ket_chi) + tensor(y*ket1, ketPhi)
 
     measurement = random.uniform(0, 1)
     if (measurement < math.pow(abs(x), 2)):
@@ -123,14 +132,15 @@ def last(s):
 
 
 def next(s):
-    '''Given an n-bit string s, returns the next n-bit string. The order is lexicographic, except that there is a string after 1...1, namely 0...0.'''
+    '''Given an n-bit string s, returns the next n-bit string. The order is lexicographic, except that there is a
+    string after 1...1, namely 0...0. '''
     k = len(s) - 1
     while k >= 0 and s[k] == 1:
         k -= 1
     if k < 0:
-        return len(s) * (0, )
+        return len(s) * (0,)
     else:
-        return s[:k] + (1, ) + (len(s) - k - 1) * (0, )
+        return s[:k] + (1,) + (len(s) - k - 1) * (0,)
 
 
 def firstTest():
@@ -167,7 +177,7 @@ def nextTest(n):
     m = integer(s)
     print(m)
     s = next(string(n, m))
-    while s != n * (0, ):
+    while s != n * (0,):
         m = integer(s)
         print(m)
         s = next(string(n, m))
@@ -184,7 +194,8 @@ def dot(s, t):
 
 
 def reduction(a):
-    '''A is a list of m >= 1 bit strings of equal dimension n >= 1. In other words, A is a non-empty m x n binary matrix. Returns the reduced row-echelon form of A. A itself is left unaltered.'''
+    '''A is a list of m >= 1 bit strings of equal dimension n >= 1. In other words, A is a non-empty m x n binary
+    matrix. Returns the reduced row-echelon form of A. A itself is left unaltered. '''
     b = a.copy()
     m = len(b)
     n = len(b[0])
@@ -219,8 +230,8 @@ def reduction(a):
 
 ### MISCELLANY ###
 
-## def application(U, ketPsi):
-##     return ketPsi.dot(U)
+## def application(U, ket_psi):
+##     return ket_psi.dot(U)
 
 
 def uniform(n):
@@ -231,10 +242,10 @@ def uniform(n):
         psiNormSq = 0
         while psiNormSq == 0:
             reals = numpy.array(
-                [random.normalvariate(0, 1) for i in range(2**n)])
+                [random.normalvariate(0, 1) for i in range(2 ** n)])
             imags = numpy.array(
-                [random.normalvariate(0, 1) for i in range(2**n)])
-            psi = numpy.array([reals[i] + imags[i] * 1j for i in range(2**n)])
+                [random.normalvariate(0, 1) for i in range(2 ** n)])
+            psi = numpy.array([reals[i] + imags[i] * 1j for i in range(2 ** n)])
             psiNormSq = numpy.dot(numpy.conj(psi), psi).real
         psiNorm = math.sqrt(psiNormSq)
         return psi / psiNorm
@@ -245,7 +256,6 @@ def uniform(n):
 
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
-
     lastTest()
 
 
