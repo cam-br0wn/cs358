@@ -218,10 +218,9 @@ def tensor(a, b):
     m >= 1. Returns the tensor product of a and b, which is (n + m)-qbit. """
 
     if len(np.shape(a)) == 1:  # if a is-a state
-        tp = np.array([])
-        for alpha in a:
-            for beta in b:
-                np.append(tp, [alpha * beta])
+        tp = a[0] * b
+        for alpha in range(1, len(a)):
+            tp = np.concatenate((tp, a[alpha] * b), axis=0)
 
     else:
         for i in range(0, len(b)):  # traverses rows of b
@@ -283,21 +282,45 @@ def last(state):
     """Assumes n>= 1. Given an n-qbit state, measures the last qbit. Returns
     a pair (a tuple or list of two elements) consisting of an (n-1)-qbit 
     state and a classical one-qbit state (either ket0 or ket1)"""
-    sumx = 0
-    for i in range(0, math.floor(len(state) / 2)):
-        sumx += math.pow(norm(state[i]), 2)
-    x = math.sqrt(sumx)
-    y = math.sqrt(1 - math.pow(x, 2))
+    sum_x = 0
+    sum_y = 0
+    for i in range(0, len(state)):
+      if i % 2 == 0:
+        sum_x += math.pow(norm(state[i]), 2)
+      else:
+        sum_y += math.pow(norm(state[i]), 2)
+    x = math.sqrt(sum_x)
+    y = math.sqrt(sum_y)
 
     measurement = random.uniform(0, 1)
     if measurement < math.pow(abs(x), 2):
-        ketChi = (1 / x) * state[:1]
+        ketChi = (1 / x) * state[:math.floor(len(state) / 2)]
         answer = [ketChi, ket0]
     else:
-        ketPhi = (1 / y) * state[2:]
+        ketPhi = (1 / y) * state[math.floor(len(state) / 2):]
         answer = [ketPhi, ket1]
     return answer
 
+def lastTest345(n, m):
+    """Assumes n >= 1. Uses one more qbit than that, so that the total number of qbits is n + 1. The parameter m is
+    how many tests to run. Should return a number close to 0.64 --- at least for large m. """
+    psi0 = 3 / 5
+    beta = uniform(n)
+    psi1 = 4 / 5
+    gamma = uniform(n)
+    chi = psi0 * tensor(beta, ket0) + psi1 * tensor(gamma, ket1)
+
+
+    def f():
+        if (first(chi)[0] == ket0).all():
+            return 0
+        else:
+            return 1
+
+    acc = 0
+    for i in range(m):
+        acc += f()
+    return acc / m
 
 ### MISCELLANY ###
 
@@ -325,7 +348,7 @@ def uniform(n):
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
     print("should be close to .64")
-    result = firstTest345(2, 100000)
+    result = lastTest345(2, 100000000)
     print(result)
     if .63 < result < .65:
         print("it do be :)")
