@@ -347,13 +347,7 @@ def uniform(n):
 
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
-    print("should be close to .64")
-    result = lastTest345(2, 100000000)
-    print(result)
-    if .63 < result < .65:
-        print("it do be :)")
-    else:
-        print("it don't be :(")
+    pass
 
 
 # If the user imports this file into another program, then main() does not run. But if the user runs this file directly as a program, then main() does run.
