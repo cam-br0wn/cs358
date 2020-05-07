@@ -37,6 +37,18 @@ swap = np.array([[1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                  [0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j],
                  [0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j]])
 
+# Our favorite three-qbit gates.
+toffoli = np.array([1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
+                   [0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
+                   [0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
+                   [0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
+                   [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
+                   [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j],
+                   [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j],
+                   [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j,])
+
+
+
 
 ### BIT STRINGS ###
 
@@ -166,6 +178,8 @@ def function(n, m, f):
     """Assumes that n = m = 1. The argument f is a Python function that takesas input an n-bit string alpha and 
     returns as output an m-bit string f(alpha). See deutschTest for examples of f. This function returns the (n + 
     m)-qbit gate F that corresponds to f. """
+
+
     if f((1,)) == (1,) and f((0,)) == (0,):
         return cnot
     elif f((1,)) == (0,) and f((0,)) == (1,):
@@ -321,6 +335,12 @@ def lastTest345(n, m):
     for i in range(m):
         acc += f()
     return acc / m
+
+def power(stateOrGate, m):
+  '''Given an n-qbit gate or state and m >= 1, returns the mth tensor power,
+  which is an (n * m)-qbit gate or state. Assumes n >= 1. For the sake of
+  time and memory, m should be small.'''
+  
 
 ### MISCELLANY ###
 
