@@ -178,11 +178,7 @@ def function(n, m, f):
     """Assumes that n = m = 1. The argument f is a Python function that takesas input an n-bit string alpha and 
     returns as output an m-bit string f(alpha). See deutschTest for examples of f. This function returns the (n + 
     m)-qbit gate F that corresponds to f. """
-    # make a matrix of 0s (2^n+m x 2^n+m)
-    # systematically go through and change one value per row to a 1
-    # smashing ket(alphaBeta) w/ F gives
-    # alphaBeta gives the column index, alpha.concat(beta o+ f(alpha)) gives row
-    # F = np.zeros((2**(n+m), 2**(n+m)), dtype=np.complex128)
+    
     F = []
     for a in range(0,2**n):
       for b in range(0,2**m):
@@ -201,6 +197,7 @@ def function(n, m, f):
           else:
             col_ket = tensor(col_ket, ket1)
         F.append(col_ket)
+
     answer = []
     for row in range(0,len(F)):
       col_vec = []
@@ -251,7 +248,7 @@ def tensor(a, b):
     """Assumes that a and b are both gates or a and b are both states. Let a be n-qbit and b be m-qbit, where n, 
     m >= 1. Returns the tensor product of a and b, which is (n + m)-qbit. """
 
-    if len(np.shape(a)) == 1:  # if a is-a state
+    if len(a).shape == 1:  # if a is-a state
         tp = a[0] * b
         for alpha in range(1, len(a)):
             tp = np.concatenate((tp, a[alpha] * b), axis=0)
