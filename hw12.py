@@ -248,7 +248,7 @@ def tensor(a, b):
     """Assumes that a and b are both gates or a and b are both states. Let a be n-qbit and b be m-qbit, where n, 
     m >= 1. Returns the tensor product of a and b, which is (n + m)-qbit. """
 
-    if len(a).shape == 1:  # if a is-a state
+    if len(a.shape) == 1:  # if a is-a state
         tp = a[0] * b
         for alpha in range(1, len(a)):
             tp = np.concatenate((tp, a[alpha] * b), axis=0)
