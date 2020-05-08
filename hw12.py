@@ -20,7 +20,7 @@ ketPlus = np.array([1 / math.sqrt(2), 1 / math.sqrt(2)])
 ketMinus = np.array([1 / math.sqrt(2), -1 / math.sqrt(2)])
 
 # Our favorite one-qbit gates.
-i = np.array([[1 + 0j, 0 + 0j], [0 + 0j, 1 + 0j]])
+iden = np.array([[1 + 0j, 0 + 0j], [0 + 0j, 1 + 0j]])
 x = np.array([[0 + 0j, 1 + 0j], [1 + 0j, 0 + 0j]])
 y = np.array([[0 + 0j, 0 - 1j], [0 + 1j, 0 + 0j]])
 z = np.array([[1 + 0j, 0 + 0j], [0 + 0j, -1 + 0j]])
@@ -38,14 +38,14 @@ swap = np.array([[1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                  [0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j]])
 
 # Our favorite three-qbit gates.
-toffoli = np.array([1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
+toffoli = np.array([[1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                    [0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                    [0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                    [0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                    [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j],
                    [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j, 0 + 0j],
                    [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j],
-                   [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j,])
+                   [0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 0 + 0j, 1 + 0j, 0 + 0j]])
 
 
 
@@ -178,16 +178,36 @@ def function(n, m, f):
     """Assumes that n = m = 1. The argument f is a Python function that takesas input an n-bit string alpha and 
     returns as output an m-bit string f(alpha). See deutschTest for examples of f. This function returns the (n + 
     m)-qbit gate F that corresponds to f. """
-
-
-    if f((1,)) == (1,) and f((0,)) == (0,):
-        return cnot
-    elif f((1,)) == (0,) and f((0,)) == (1,):
-        return np.dot(cnot, (tensor(i, x)))
-    elif f((0,)) == (1,):
-        return tensor(i, x)
-    else:
-        return tensor(i, i)
+    # make a matrix of 0s (2^n+m x 2^n+m)
+    # systematically go through and change one value per row to a 1
+    # smashing ket(alphaBeta) w/ F gives
+    # alphaBeta gives the column index, alpha.concat(beta o+ f(alpha)) gives row
+    # F = np.zeros((2**(n+m), 2**(n+m)), dtype=np.complex128)
+    F = []
+    for a in range(0,2**n):
+      for b in range(0,2**m):
+        alpha = f'{a:08b}'
+        beta = f'{a:08b}'
+        beta_new = str(int(beta) ^ int(f(alpha)))
+        row_bits = alpha + beta_new
+        col_ket = 0
+        if row_bits[0] == '0':
+          col_ket = ket0
+        else:
+          col_ket = ket1
+        for elem in range(1, len(row_bits)):
+          if row_bits[elem] == '0':
+            col_ket = tensor(col_ket, ket0)
+          else:
+            col_ket = tensor(col_ket, ket1)
+        F.append(col_ket)
+    answer = []
+    for row in range(0,len(F)):
+      col_vec = []
+      for col in range(0, len(F[0])):
+        col_vec.append(F[row][col].real)
+      answer.append(col_vec)
+    return answer
 
 
 def deutsch(f):
@@ -308,10 +328,10 @@ def last(state):
 
     measurement = random.uniform(0, 1)
     if measurement < math.pow(abs(x), 2):
-        ketChi = (1 / x) * state[:math.floor(len(state) / 2)]
+        ketChi = (1 / x) * state[::2]
         answer = [ketChi, ket0]
     else:
-        ketPhi = (1 / y) * state[math.floor(len(state) / 2):]
+        ketPhi = (1 / y) * state[1::2]
         answer = [ketPhi, ket1]
     return answer
 
@@ -340,7 +360,112 @@ def power(stateOrGate, m):
   '''Given an n-qbit gate or state and m >= 1, returns the mth tensor power,
   which is an (n * m)-qbit gate or state. Assumes n >= 1. For the sake of
   time and memory, m should be small.'''
+  tp = stateOrGate
+  for i in range(0,m-1):
+    tp = tensor(tp, tp)
+  return tp
+
+def bersteinVazirani(n, f):
+  '''Given n >= 1 and an (n + 1)-qbit gate f representing a function {0, 1}^n -> {0, 1} defined by mod-2 dot product with an unknown w in {0, 1}^n, returns the list or tuple of n classical one-qbit states (ket0 or ket1) corresponding to w.'''
+  cp0 = tensor(power(ket0, n), ket1)
+  cp1 = np.dot(cp0, power(h, n+1))
+  cp2 = np.dot(cp1, f)
+  cp3 = np.dot(cp2, power(h, n+1))
+  part_meas = []
+  part_meas.append(first(cp3)[0])
+  rest = first(cp3)[1]
+
+  for i in range(1, n):
+    part_meas.append(first(rest)[0])
+    rest = first(rest)[1]
   
+  bit_str = ''
+
+  for i in range(0, len(part_meas)):
+    if((part_meas[i] == ket0).all()):
+      bit_str += '0'
+    else:
+      bit_str += '1'
+  
+  return bit_str
+
+def randomBitString(n):
+  ''' generates a random bit string of length n '''
+  bit_str = ''
+  for i in range(0, n):
+    bit_str += str(random.randint(0, 2))
+  return bit_str
+
+def bersteinVaziraniTest(n):
+  delta = randomBitString(n)
+  
+  # function f that goes from {0,1}^n --> {0,1}
+  def f(alpha):
+    ret = 0
+    for i in range(0, len(alpha)):
+      ret += int(alpha[i]) * int(delta[i])
+    ret = ret % 2
+    return ret
+  
+  F = function(n, 1, f)
+  print("F is: ")
+  print(F)
+  bern_res = bersteinVazirani(n, F)
+  print("\ndelta: ")
+  print(delta)
+  print("\nIf this thing matches delta we are g o l d e n")
+  print(bern_res)
+
+
+def simon(n, f):
+  ''' The inputs are an integer n >= and an (n + n - 1)-qbit gate f representing a function {0, 1}^n -> {0, 1}^(n - 1) hiding an n-bit string w as in the Simon (1994) problem. Returns a list of n classical one-qbit states (ket0 or ket1) corresponding to a uniformly random bit string gamma that is perpendicular to w.'''
+  cp0 = power(ket0, 2*n - 1)
+  cp1 = tensor(power(h, n), power(iden, n-1))
+  print(cp0)
+  print(cp1)
+  cp2 = np.dot(cp0, cp1)
+  cp3 = np.dot(cp2, f)
+  bot_meas = []
+  bot_meas.append(last(cp3)[1])
+  rem = last(cp3)[0]
+  for i in range(1, n-1):
+    bot_meas.append(last(rem)[1])
+    rem = last(rem)[0]
+  cp4 = np.dot(rem, power(h,n))
+  top_meas = []
+  top_meas.append(first(cp4)[0])
+  rem = first(cp4)[1]
+  for i in range(1, n):
+    top_meas.append(first(rem)[0])
+    rem = first(rem)[1]
+  bit_str = ''
+  for i in range(0, len(top_meas)):
+    if((top_meas[i] == ket0).all()):
+      bit_str += '0'
+    else:
+      bit_str += '1'
+  return bit_str
+
+def simonTest(n):
+  ''' function to do the stackin of the gammers '''
+  def f(a):
+    return a[1:]
+  F = function(n, n-1, f)
+  s = simon(n, F)
+  print(s)
+  A = []
+  A.append(s)
+  print("A: ")
+  print(A)
+  print("len")
+  print(len(A))
+  while len(A) < n - 1:
+    s = simon(n, F)
+    print(s)
+    A.append(s)
+    print(A)
+    A = reduction(A)
+    print(A)
 
 ### MISCELLANY ###
 
@@ -367,7 +492,7 @@ def uniform(n):
 
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
-    pass
+  simonTest(2)
 
 
 # If the user imports this file into another program, then main() does not run. But if the user runs this file directly as a program, then main() does run.
