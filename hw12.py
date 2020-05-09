@@ -179,32 +179,17 @@ def function(n, m, f):
     returns as output an m-bit string f(alpha). See deutschTest for examples of f. This function returns the (n + 
     m)-qbit gate F that corresponds to f. """
     
-    F = []
+    F = np.zeros((2**(n+m),2**(n+m)), dtype=one.dtype)
     for a in range(0,2**n):
       for b in range(0,2**m):
-        alpha = f'{a:08b}'
-        beta = f'{a:08b}'
-        beta_new = str(int(beta) ^ int(f(alpha)))
+        alpha = string(n,a)
+        beta = string(m,b)
+        beta_new = addition(beta,f(alpha))
         row_bits = alpha + beta_new
-        col_ket = 0
-        if row_bits[0] == '0':
-          col_ket = ket0
-        else:
-          col_ket = ket1
-        for elem in range(1, len(row_bits)):
-          if row_bits[elem] == '0':
-            col_ket = tensor(col_ket, ket0)
-          else:
-            col_ket = tensor(col_ket, ket1)
-        F.append(col_ket)
+        col_bits = alpha + beta
+        F[integer(row_bits)][integer(col_bits)] = 1 + 0j
 
-    answer = []
-    for row in range(0,len(F)):
-      col_vec = []
-      for col in range(0, len(F[0])):
-        col_vec.append(F[row][col].real)
-      answer.append(col_vec)
-    return answer
+    return F
 
 
 def deutsch(f):
@@ -244,28 +229,31 @@ def application(gate, state):
     return np.dot(gate, state)
 
 
-def tensor(a, b):
-    """Assumes that a and b are both gates or a and b are both states. Let a be n-qbit and b be m-qbit, where n, 
-    m >= 1. Returns the tensor product of a and b, which is (n + m)-qbit. """
+# def tensor(a, b):
+#     """Assumes that a and b are both gates or a and b are both states. Let a be n-qbit and b be m-qbit, where n, 
+#     m >= 1. Returns the tensor product of a and b, which is (n + m)-qbit. """
 
-    if len(a.shape) == 1:  # if a is-a state
-        tp = a[0] * b
-        for alpha in range(1, len(a)):
-            tp = np.concatenate((tp, a[alpha] * b), axis=0)
+#     if len(a.shape) == 1:  # if a is-a state
+#         tp = a[0] * b
+#         for alpha in range(1, len(a)):
+#             tp = np.concatenate((tp, a[alpha] * b), axis=0)
 
-    else:
-        for i in range(0, len(b)):  # traverses rows of b
-            beta = np.dot(a, b[i][0])
-            for j in range(1, len(b[i])):  # traverses columns of b
-                alpha = np.dot(a, b[i][j])
-                np.concatenate((beta, alpha), axis=1)
+#     else:
+#         for i in range(0, len(b)):  # traverses rows of b
+#             beta = np.dot(a, b[i][0])
+#             for j in range(1, len(b[i])):  # traverses columns of b
+#                 alpha = np.dot(a, b[i][j])
+#                 np.concatenate((beta, alpha), axis=1)
 
-            if i != 0:
-                np.concatenate((tp, beta), axis=0)
-            else:
-                tp = beta
+#             if i != 0:
+#                 np.concatenate((tp, beta), axis=0)
+#             else:
+#                 tp = beta
 
-    return tp
+#     return tp
+
+def tensor(a,b):
+  return np.kron(a,b)
 
 
 def first(state):
@@ -359,7 +347,7 @@ def power(stateOrGate, m):
   time and memory, m should be small.'''
   tp = stateOrGate
   for i in range(0,m-1):
-    tp = tensor(tp, tp)
+    tp = tensor(tp, stateOrGate)
   return tp
 
 def bersteinVazirani(n, f):
@@ -376,21 +364,18 @@ def bersteinVazirani(n, f):
     part_meas.append(first(rest)[0])
     rest = first(rest)[1]
   
-  bit_str = ''
-
+  gamma = ()
   for i in range(0, len(part_meas)):
     if((part_meas[i] == ket0).all()):
-      bit_str += '0'
+      gamma += (0,)
     else:
-      bit_str += '1'
+      gamma += (1,)
   
-  return bit_str
+  return gamma
 
 def randomBitString(n):
   ''' generates a random bit string of length n '''
-  bit_str = ''
-  for i in range(0, n):
-    bit_str += str(random.randint(0, 2))
+  bit_str = string(n, random.randint(0, 2**n - 1))
   return bit_str
 
 def bersteinVaziraniTest(n):
@@ -398,11 +383,7 @@ def bersteinVaziraniTest(n):
   
   # function f that goes from {0,1}^n --> {0,1}
   def f(alpha):
-    ret = 0
-    for i in range(0, len(alpha)):
-      ret += int(alpha[i]) * int(delta[i])
-    ret = ret % 2
-    return ret
+    return (dot(delta, alpha),)
   
   F = function(n, 1, f)
   print("F is: ")
@@ -418,10 +399,14 @@ def simon(n, f):
   ''' The inputs are an integer n >= and an (n + n - 1)-qbit gate f representing a function {0, 1}^n -> {0, 1}^(n - 1) hiding an n-bit string w as in the Simon (1994) problem. Returns a list of n classical one-qbit states (ket0 or ket1) corresponding to a uniformly random bit string gamma that is perpendicular to w.'''
   cp0 = power(ket0, 2*n - 1)
   cp1 = tensor(power(h, n), power(iden, n-1))
-  print(cp0)
-  print(cp1)
-  cp2 = np.dot(cp0, cp1)
-  cp3 = np.dot(cp2, f)
+  print("cp0 shape: ")
+  print(cp0.shape)
+  print("cp1 shape: ")
+  print(cp1.shape)
+  cp2 = application(cp1, cp0)
+  print("cp2 shape: ")
+  print(cp2.shape)
+  cp3 = application(f, cp2)
   bot_meas = []
   bot_meas.append(last(cp3)[1])
   rem = last(cp3)[0]
@@ -435,34 +420,42 @@ def simon(n, f):
   for i in range(1, n):
     top_meas.append(first(rem)[0])
     rem = first(rem)[1]
-  bit_str = ''
-  for i in range(0, len(top_meas)):
-    if((top_meas[i] == ket0).all()):
-      bit_str += '0'
-    else:
-      bit_str += '1'
-  return bit_str
+  return top_meas
+
+def allZeros(gammas):
+  for item in gammas[len(gammas)-1]:
+    if item != 0:
+      return False
+  return True
+    
 
 def simonTest(n):
   ''' function to do the stackin of the gammers '''
   def f(a):
     return a[1:]
+  delta = (1,) + (n-1)*(0,)
   F = function(n, n-1, f)
+  print(F.shape)
   s = simon(n, F)
-  print(s)
-  A = []
-  A.append(s)
-  print("A: ")
-  print(A)
-  print("len")
-  print(len(A))
-  while len(A) < n - 1:
+  gammas = []
+  while len(gammas) < n - 1:
     s = simon(n, F)
-    print(s)
-    A.append(s)
-    print(A)
-    A = reduction(A)
-    print(A)
+    gamma = ()
+    for i in range(0, len(s)):
+      if((s[i] == ket0).all()):
+        gamma += (0,)
+      else:
+        gamma += (1,)
+    print(gamma)
+    gammas.append(gamma)
+    gammas = reduction(gammas)
+    if allZeros(gammas):
+      gammas.pop()
+  print(gammas)
+  print(delta)
+  for gamma in gammas:
+    # hopefully prints out a bunch of zeros
+    print(dot(gamma, delta))
 
 ### MISCELLANY ###
 
@@ -489,7 +482,7 @@ def uniform(n):
 
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
-  simonTest(2)
+  bersteinVaziraniTest(3)
 
 
 # If the user imports this file into another program, then main() does not run. But if the user runs this file directly as a program, then main() does run.
