@@ -470,16 +470,19 @@ def powerMod(k, l, m):
         integer m. Computes k^l mod m. Returns an integer in {0, ..., m - 1}.  """
     if l == 0 and m != 1: return 1
     elif l == 0 and m == 1: return 0
-    gPow = 1
-    while gPow < l:
-        gPow *= 2
-    pow_sum = 0
-    k_prod = 1
-    while pow_sum <= l:
-        k_prod *= k ** gPow
-        pow_sum += gPow
-        gPow = gPow // 2
-    return k_prod % m
+
+    gPow = math.ceil(math.log(l, 2) + 1)
+    str_l = string(gPow, l)
+    k_ttl = 1
+    k_pow = k
+    for i in range(0, gPow):
+        if str_l[gPow - i - 1] == 1:
+            k_ttl *= k_pow
+            k_ttl = k_ttl % m
+        k_pow = k_pow ** 2
+        k_pow = k_pow % m
+
+    return k_ttl
 
 
 def fourier(n):
@@ -530,15 +533,19 @@ def shorTest(n, m):
         k = random.randint(2, m)
 
     def f(a):
-        power_mods = []
-        i = 1
-        power_mods.append(powerMod(k, 0, m))
-        while powerMod(k, i, m) != power_mods[len(power_mods)]:
-            power_mods.append(powerMod(k, i, m))
-            i += 1
-        return power_mods
+        int_a = integer(a)
+        pow_a = powerMod(k, int_a, m)
+        str_a = string(n, pow_a)
+        return str_a
+    # power_mods = []
+    # i = 1
+    # power_mods.append(powerMod(k, 0, m))
+    # while powerMod(k, i, m) != power_mods[len(power_mods)]:
+    #     power_mods.append(powerMod(k, i, m))
+    #     i += 1
+    # return power_mods
 
-    F = function(n, m, f)
+    F = function(n, n, f)
 
     print(shor(n, F))
 
@@ -568,7 +575,8 @@ def uniform(n):
 
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
-    shorTest(2, 3)
+    # print(powerMod(3, 4, 11))
+    shorTest(5, 5)
 
 # If the user imports this file into another program, then main() does not run. But if the user runs this file directly as a program, then main() does run.
 if __name__ == "__main__":
