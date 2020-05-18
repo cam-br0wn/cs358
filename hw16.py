@@ -264,6 +264,7 @@ def first(state):
     for i in range(0, math.floor(len(state) / 2)):
         sum_x += math.pow(norm(state[i]), 2)
     x = math.sqrt(sum_x)
+    if x > 1: x = 1
     y = math.sqrt(1 - math.pow(x, 2))
 
     measurement = random.uniform(0, 1)
@@ -552,7 +553,7 @@ def shorTest_old(n, m):
 
     F = function(n, n, f)
 
-    print(shor(n, F))
+    # print(shor(n, F))
 
 
 def shorTest(n, m):
@@ -560,35 +561,117 @@ def shorTest(n, m):
     while math.gcd(k, m) != 1:
         k = random.randint(2, m)
 
+    return period_finding(n, k, m)
+
+# def fraction(x0, j):
+#     a = math.floor(1 / x0)
+#     x1 = (1 / x0) - a
+#     if x1 == 0:
+#         return 0
+#     elif j != 0:
+#         return 1 / (a + fraction(x1, j - 1))
+#     return 0
+#
+#
+# def convert_float_to_frac(x0, j):
+#     frac_pair = Fraction(x0).limit_denominator(1000)
+#     gcd = math.gcd(frac_pair.numerator, frac_pair.denominator)
+#     while gcd != 1:
+#         frac_pair.numerator /= gcd
+#         frac_pair.denominator /= gcd
+#         gcd = math.gcd(frac_pair.numerator, frac_pair.denominator)
+#     return frac_pair
+
+def fraction(x0, j):
+    '''returns a pair (c, d) representing c/d in lowest terms.
+    Then use continuedFraction to call fraction in a loop'''
+    if x0 == 0 or j < 0:
+        return (0, 1)  # == 0 == (c, d) == (numerator, denomenator)
+    else:
+        a0 = math.floor(1 / x0)
+        x1 = 1 / x0 - a0
+        if fraction(x1, j - 1) == 0:
+            return (1, a0)  # == 1/a0 == 1/(a0 + 0) == (c, d) == (numerator, denomenator)
+        else:
+            return (fraction(x1, j - 1)[1],
+                    a0 * fraction(x1, j - 1)[1] + fraction(x1, j - 1)[0])  # == d/(a0 * d + c)
+
+
+def continuedFraction(n, m, x0):
+    # ’’’x0 is a float in [0, 1). Tries probing depths j = 0, 1, 2, ... until
+    # the resulting rational approximation x0 ~ c / d satisfies either d >= m or
+    # |x0 - c / d| <= 1 / 2^(n + 1). Returns a pair (c, d) with gcd(c, d) = 1.’’’
+    j = 0
+    while True:
+        answer = fraction(x0, j)
+        if answer == 0:
+            c = 0
+            d = 1
+        else:
+            c = answer[0]
+            d = answer[1]
+        if abs(x0 - c / d) <= 1 / math.pow(2, (n + 1)) or d >= m:
+            return (c, d)
+        else:
+            j += 1
+
+
+def ket_to_int(arr):
+    s = ()
+    for item in arr:
+        if (item == ket0).all():
+            s += (0, )
+        elif (item == ket1).all():
+            s += (1, )
+    return integer(s)
+
+
+def period_finding(n, k, m):
+    # step 1 implied by input params
+    # step 2 done in shorTest
+
     def f(a):
         int_a = integer(a)
         pow_a = powerMod(k, int_a, m)
         str_a = string(n, pow_a)
         return str_a
 
-def fraction(x0, j):
-    a = math.floor(1 / x0)
-    x1 = (1 / x0) - a
-    if x1 == 0:
-        return 0
-    elif j != 0:
-        return 1 / (a + fraction(x1, j - 1))
-    return 0
+    F = function(n, n, f)
 
+    # step 3
+    while True:
+        d = m
+        d_prime = m
 
-def convert_float_to_frac(x0, j):
-    frac_pair = Fraction(x0).limit_denominator(1000)
-    gcd = math.gcd(frac_pair.numerator, frac_pair.denominator)
-    while gcd != 1:
-        frac_pair.numerator /= gcd
-        frac_pair.denominator /= gcd
-        gcd = math.gcd(frac_pair.numerator, frac_pair.denominator)
-    return frac_pair
+        # step B
+        while d >= m:
+            b = shor(n, F)
+            b = ket_to_int(b)
+            d = continuedFraction(n, m, b / 2**n)[1]
 
+        # step C
+        if powerMod(k, d, m) == 1:
+            p = d
+            return p
 
-def continuedFraction(n, m, x0):
-    return convert_float_to_frac()
+        # step D
+        while d_prime >= m:
+            b = shor(n, F)
+            b = ket_to_int(b)
+            d_prime = continuedFraction(n, m, b / 2**n)[1]
 
+        # step E
+        if powerMod(k, d_prime, m) == 1:
+            p = d_prime
+            return p
+
+        # step F
+        lcm = (d * d_prime) / math.gcd(d, d_prime)
+
+        # step G
+        if powerMod(k, lcm, m ) == 1:
+            p = lcm
+            return p
 
 
 ### MISCELLANY ###
@@ -618,7 +701,7 @@ def uniform(n):
 def main():
     # print(powerMod(3, 4, 11))
     # print(convert_float_to_frac(.625, 10))
-    print(string(10, 5))
+    print(shorTest(5, 5))
 
 # If the user imports this file into another program, then main() does not run. But if the user runs this file directly as a program, then main() does run.
 if __name__ == "__main__":
