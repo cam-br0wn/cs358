@@ -23,7 +23,7 @@ ketPlus = np.array([1 / math.sqrt(2), 1 / math.sqrt(2)])
 ketMinus = np.array([1 / math.sqrt(2), -1 / math.sqrt(2)])
 
 # Our favorite one-qbit gates.
-iden = np.array([[1 + 0j, 0 + 0j], [0 + 0j, 1 + 0j]])
+i = np.array([[1 + 0j, 0 + 0j], [0 + 0j, 1 + 0j]])
 x = np.array([[0 + 0j, 1 + 0j], [1 + 0j, 0 + 0j]])
 y = np.array([[0 + 0j, 0 - 1j], [0 + 1j, 0 + 0j]])
 z = np.array([[1 + 0j, 0 + 0j], [0 + 0j, -1 + 0j]])
@@ -523,8 +523,7 @@ def shor(n, f):
         rem = last(rem)[0]
     # cp4 = np.dot(rem, power(h, n))
     cp5 = application(fourier(n), rem)
-    top_meas = []
-    top_meas.append(first(cp5)[0])
+    top_meas = [first(cp5)[0]]
     rem = first(cp5)[1]
     for i in range(1, n):
         top_meas.append(first(rem)[0])
@@ -597,9 +596,9 @@ def ket_to_int(arr):
     s = ()
     for item in arr:
         if (item == ket0).all():
-            s += (0, )
+            s += (0,)
         elif (item == ket1).all():
-            s += (1, )
+            s += (1,)
     return integer(s)
 
 
@@ -624,7 +623,7 @@ def period_finding(n, k, m):
         while d >= m:
             b = shor(n, F)
             b = ket_to_int(b)
-            d = continuedFraction(n, m, b / 2**n)[1]
+            d = continuedFraction(n, m, b / 2 ** n)[1]
 
         # step C
         if powerMod(k, d, m) == 1:
@@ -635,7 +634,7 @@ def period_finding(n, k, m):
         while d_prime >= m:
             b = shor(n, F)
             b = ket_to_int(b)
-            d_prime = continuedFraction(n, m, b / 2**n)[1]
+            d_prime = continuedFraction(n, m, b / 2 ** n)[1]
 
         # step E
         if powerMod(k, d_prime, m) == 1:
@@ -646,9 +645,49 @@ def period_finding(n, k, m):
         lcm = (d * d_prime) / math.gcd(d, d_prime)
 
         # step G
-        if powerMod(k, lcm, m ) == 1:
+        if powerMod(k, lcm, m) == 1:
             p = lcm
             return p
+
+
+def grover(n, f):
+    t = math.asin(1 / (2 ** (n / 2)))
+    l = round((math.pi / (4 * t)) - 0.5)  # number of times we're gonna fire the loop
+    ket_rho = power(ketPlus, n)
+    ket_bra_rho = np.outer(ket_rho, ket_rho)
+    i_n = power(i, n)
+    R = (2 * ket_bra_rho) - i_n
+
+    base_state = tensor(power(ket0, n), ket1)
+    base_state = application(power(h, n + 1), base_state)
+    for counter in range(0, l):
+        base_state = application(f, base_state)
+        base_state = application(tensor(R, i), base_state)
+
+    top_meas = [first(base_state)[0]]
+    rem = first(base_state)[1]
+    for j in range(1, n):
+        top_meas.append(first(rem)[0])
+        rem = first(rem)[1]
+
+    temp = ket_to_int(top_meas)
+    return string(temp, n)
+
+
+def groverTest(n):
+    delta = random.randint(0, 2 ** n)
+    str_delta = string(delta, n)
+
+    def f(a):
+        if a == str_delta:
+            return 1,
+        return 0,
+
+    F = function(n, 1, f)
+    grover_delta = grover(n, F)
+
+    print("true delta: " + str(str_delta))
+    print("grover delta: " + str(grover_delta))
 
 
 ### MISCELLANY ###
@@ -676,7 +715,9 @@ def uniform(n):
 
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
-    print(shorTest(5, 5))
+    # print(shorTest(5, 5))
+    groverTest(3)
+
 
 # If the user imports this file into another program, then main() does not run. But if the user runs this file directly as a program, then main() does run.
 if __name__ == "__main__":
