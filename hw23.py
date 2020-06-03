@@ -817,9 +817,9 @@ def detection(state7):
     return str
 
 def decoding(state7):
-    if state7 == ket07:
+    if np.allclose(state7, ket07):
         return ket0
-    elif state7 == ket17:
+    elif np.allclose(state7, ket17):
         return ket1
     print("both decoding cases failed, exiting")
     exit(1)
@@ -885,6 +885,19 @@ def correction7(diagnosis):
     return application(correction, diagnosis[-1])
 
 
+def steaneTest7():
+
+    random.seed()
+    rand = random.randint(0, 2)
+    if rand == 1:
+        print("1 case")
+        corrupted_ket = np.matmul(e7, tensor(ket0, power(ket1, 6)))
+    else:
+        print("0 case")
+        corrupted_ket = np.matmul(e7, tensor(ket1, power(ket0, 6)))
+
+    print(correction7(detection(corrupted_ket)))
+
 ### MISCELLANY ###
 
 
@@ -911,7 +924,7 @@ def uniform(n):
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
     start = timeit.default_timer()
-    print(detection(ket07))
+    steaneTest7()
     stop = timeit.default_timer()
     print('Runtime: ', stop - start)
 
