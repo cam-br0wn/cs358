@@ -8,6 +8,7 @@ import random
 import math
 import cmath
 import numpy as np
+import timeit
 
 ### CONSTANTS ###
 
@@ -774,7 +775,7 @@ L = np.matmul(((power(i, 7)) + m07) / 2, np.matmul(((power(i, 7)) + m17) / 2, ((
 
 e7 = (2 ** (3 / 2)) * L
 
-ket07 = np.matmul(e7, power(ket0, 7))
+ket07 = np.matmul(e7, tensor(ket1, power(ket0, 6)))
 ket17 = np.matmul(e7, power(ket1, 7))
 
 
@@ -800,14 +801,16 @@ def detection(state7):
     str = ()
 
     for j in range(0, 6):
-        first_qbit = first(state)
+        first_qbit = first(state)[0]
+        rem = first(state)[1]
         if (first_qbit == ket0).all():
-            str += (0,)
+            str += (ket0,)
         elif (first_qbit == ket1).all():
-            str += (1,)
-        state = state[1:]
+            str += (ket1,)
+        state = rem
+    str += (state,)
 
-    if len(str) != 6:
+    if len(str) != 7:
         print("detection failed: string to short!")
         exit(1)
 
@@ -907,7 +910,10 @@ def uniform(n):
 
 # It is conventional to have a main() function. Currently it does nothing. Change it to do whatever you want (or not).
 def main():
-     print(detection(ket07))
+    start = timeit.default_timer()
+    print(detection(ket07))
+    stop = timeit.default_timer()
+    print('Runtime: ', stop - start)
 
 
 # If the user imports this file into another program, then main() does not run. But if the user runs this file directly as a program, then main() does run.
